@@ -21,11 +21,11 @@ class QuizApp():
         }
 
         self.categories = {
-            "Animals": pd.read_csv("animals.csv"),
-            "Food & Drink": pd.read_csv("food_drink.csv"),
-            "Colours": pd.read_csv("colours.csv"),
-            "Numbers": pd.read_csv("numbers.csv"),
-            "Hobbies": pd.read_csv("hobbies.csv"),
+            "Animals": pd.read_csv("data/animals.csv"),
+            "Food & Drink": pd.read_csv("data/food_drink.csv"),
+            "Colours": pd.read_csv("data/colours.csv"),
+            "Numbers": pd.read_csv("data/numbers.csv"),
+            "Hobbies": pd.read_csv("data/hobbies.csv"),
         }
 
         main_heading = tk.Label(root, text="LANGUAGES EXAM PRACTICE", font=("Bebas Neue", 32))
@@ -88,6 +88,7 @@ class QuizApp():
             self.question_index = 0
             self.questions = generate_questions()
             self.selected_answer = None
+            self.incorrect_answers = []
 
             # Create a new window for the quiz
             self.quiz_window = tk.Toplevel(self.root)
@@ -159,6 +160,8 @@ class QuizApp():
 
             if self.selected_answer == self.questions[self.question_index][1]:
                 self.score += 1
+            else:
+                self.incorrect_answers.append((self.questions[self.question_index][0], self.questions[self.question_index][1], self.selected_answer))
 
             if self.question_index < 9:
                 self.question_index += 1
@@ -168,8 +171,13 @@ class QuizApp():
                 show_result()
         
         def show_result():
-            result = f"Your score is {self.score}/10"
+            result = f"Your score is {self.score}/10\n"
+            if self.incorrect_answers:
+                result += "\nIncorrect Answers:\n"
+                for question, correct_answer, given_answer in self.incorrect_answers:
+                    result += f"Question: {question} - Correct: {correct_answer} - Your Answer: {given_answer}\n"
             messagebox.showinfo("Quiz Complete", result)
+            self.quiz_window.destroy()
 
 if __name__ == "__main__":
     root = tk.Tk()
