@@ -10,6 +10,8 @@ class QuizApp():
         self.root.title("Language Quiz App")
         self.root.geometry("800x600")
         self.root.resizable(False, False)
+
+        self.root.geometry("800x600")
     
         self.language = None
         self.category = None
