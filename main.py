@@ -4,15 +4,17 @@ import pandas as pd
 import random
 from PIL import Image, ImageTk
 
+
 class QuizApp():
     def __init__(self, root):
         self.root = root
         self.root.title("Language Quiz App")
         self.root.geometry("800x600")
         self.root.resizable(False, False)
-
         self.root.geometry("800x600")
-    
+
+        self.accent_colour = "#008EFE"
+
         self.language = None
         self.category = None
 
@@ -67,10 +69,10 @@ class QuizApp():
         self.category_dropdown = tk.OptionMenu(self.selection_frame, self.selected_category, *self.categories.keys())
         self.category_dropdown.pack(pady=5)
 
-        self.start_button = tk.Button(self.selection_frame, text="Start Quiz", command=lambda : start_quiz(), bg="#0072C6", fg="#fff", font=("Helvetica Neue LT", 12), relief=tk.FLAT)
+        self.start_button = tk.Button(self.selection_frame, text="Start Quiz", command=lambda: start_quiz(), bg=self.accent_colour, fg="#fff", font=("Helvetica Neue LT", 12), relief=tk.FLAT)
         self.start_button.pack(pady=20, side=tk.RIGHT)
 
-        self.exit_button = tk.Button(self.selection_frame, text="Exit", command=root.quit, bg="#0072C6", fg="#fff", font=("Helvetica Neue LT", 12), relief=tk.FLAT)
+        self.exit_button = tk.Button(self.selection_frame, text="Exit", command=root.quit, bg=self.accent_colour, fg="#fff", font=("Helvetica Neue LT", 12), relief=tk.FLAT)
         self.exit_button.pack(pady=20, side=tk.LEFT)
 
         self.exeter_logo = ImageTk.PhotoImage(Image.open("img/exeter_college.png").resize((250, 100)))
@@ -79,7 +81,11 @@ class QuizApp():
 
         def select_language(language):
             self.language = language
-            self.selected_language.config(text=f"Selected Quiz Language: {language}")
+            self.selected_language.config(text=f"Selected Quiz Language: {self.language}")
+
+        def get_category():
+            return self.selected_category.get()
+            
 
         def start_quiz():
             if not self.language:
@@ -92,12 +98,11 @@ class QuizApp():
             self.selected_answer = None
             self.incorrect_answers = []
 
-            # Create a new window for the quiz
             self.quiz_window = tk.Toplevel(self.root)
             self.quiz_window.title("Language Quiz")
             self.quiz_window.geometry("600x400")
+            self.quiz_window.resizable(False, False)
 
-            # Centering elements in the quiz window
             self.quiz_frame = tk.Frame(self.quiz_window)
             self.quiz_frame.pack(expand=True)
 
@@ -106,19 +111,19 @@ class QuizApp():
 
             self.option_buttons = []
 
-            for i in range (4):
+            for i in range(4):
                 btn = tk.Button(self.quiz_frame, text="", command=lambda i=i: select_answer(i), bg="#CCCCCC", fg="#303030", font=("Helvetica Neue", 12), relief=tk.FLAT, width=20)
                 btn.pack(pady=10)
                 self.option_buttons.append(btn)
             
-            self.next_button = tk.Button(self.quiz_frame, text="Next", command=next_question, bg="#0072C6", fg="#FFFFFF", font=("Helvetica Neue", 12), relief=tk.FLAT)
+            self.next_button = tk.Button(self.quiz_frame, text="Next", command=next_question, bg=self.accent_colour, fg="#FFFFFF", font=("Helvetica Neue", 12), relief=tk.FLAT)
             self.next_button.pack(pady=20)
 
             load_question()
-
-            
+    
         def generate_questions():
-            category = self.selected_category.get()
+            category = get_category()
+            language = self.language
 
             questions = []
             used_indices = set()
@@ -127,8 +132,8 @@ class QuizApp():
                 random_index = random.randint(0, len(self.categories[category]) - 1)
                 if random_index not in used_indices:
                     used_indices.add(random_index)
-                    question = self.categories[self.selected_category.get()]["English"].iloc[random_index]
-                    answer = self.categories[self.selected_category.get()][self.language].iloc[random_index]
+                    question = self.categories[category]["English"].iloc[random_index]
+                    answer = self.categories[category][language].iloc[random_index]
                     questions.append((question, answer))
                 
             return questions
@@ -136,11 +141,12 @@ class QuizApp():
         def load_question():
             english_word = self.questions[self.question_index][0]
             quiz_word = self.questions[self.question_index][1]
+            category = get_category()
+
+            options = [quiz_word] + random.sample([word for word in self.categories[category][self.language] if word != quiz_word], 3)
+            random.shuffle(options)
 
             self.question_label.config(text=f"What is \"{english_word}\" in {self.language}?")
-
-            options = [quiz_word] + random.sample([word for word in self.categories[self.selected_category.get()][self.language] if word != quiz_word], 3)
-            random.shuffle(options)
 
             for i in range(4):
                 self.option_buttons[i].config(text=options[i])
@@ -148,15 +154,14 @@ class QuizApp():
                     btn.config(bg="#CCCCCC", fg="#303030")
         
         def select_answer(i):
-
             selected_button = i
 
             self.selected_answer = self.option_buttons[selected_button]["text"]
 
             for btn in self.option_buttons:
-                btn.config(bg="#CCCCCC", fg="#303030")
-            
-            self.option_buttons[i].config(bg="#0072C6", fg="#FFFFFF")
+                btn.config(bg="#CCCCCC", fg="#303030")     
+
+            self.option_buttons[i].config(bg=self.accent_colour, fg="#FFFFFF")
         
         def next_question():
 
@@ -165,7 +170,7 @@ class QuizApp():
             else:
                 self.incorrect_answers.append((self.questions[self.question_index][0], self.questions[self.question_index][1], self.selected_answer))
 
-            if self.question_index < 9:
+            if self.question_index < len(self.questions) - 1:
                 self.question_index += 1
                 self.selected_answer = None
                 load_question()
@@ -174,10 +179,12 @@ class QuizApp():
         
         def show_result():
             result = f"Your score is {self.score}/10\n"
+
             if self.incorrect_answers:
-                result += "\nIncorrect Answers:\n"
+                result += "\nIncorrect Answers:\n\n"
                 for question, correct_answer, given_answer in self.incorrect_answers:
-                    result += f"Question: {question} - Correct: {correct_answer} - Your Answer: {given_answer}\n"
+                    result += f"Question: {question} - Answer: {correct_answer} - Your Guess: {given_answer}\n\n"
+            
             messagebox.showinfo("Quiz Complete", result)
             self.quiz_window.destroy()
 
